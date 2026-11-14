@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { toPng } from 'html-to-image';
+import { Capacitor } from '@capacitor/core';
+import { Share } from '@capacitor/share';
+import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Header } from './components/Header';
 import { CalculatorForm } from './components/CalculatorForm';
 import { ReceiptTicket } from './components/ReceiptTicket';
@@ -76,7 +79,7 @@ export const App: React.FC = () => {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  // Real-time calculation with optional water and rounded final total
+  // Real-time calculation
   const numAnterior = parseFloat(lecturaAnterior) || 0;
   const numActual = parseFloat(lecturaActual) || 0;
   const numPrecioKwh = parseFloat(precioKwh) || settings.precioKwh;
@@ -120,7 +123,6 @@ export const App: React.FC = () => {
   // Generate Image
   const generateReceiptImage = async (): Promise<string | null> => {
     if (!receiptTicketRef.current) return null;
-    setIsGeneratingImage(true);
     try {
       const dataUrl = await toPng(receiptTicketRef.current, {
         quality: 1,
@@ -132,66 +134,118 @@ export const App: React.FC = () => {
       console.error('Error generating image', error);
       alert('Hubo un inconveniente al generar la imagen del recibo.');
       return null;
-    } finally {
-      setIsGeneratingImage(false);
     }
   };
 
   // Download Receipt as PNG
   const handleDownloadImage = async () => {
-    const dataUrl = await generateReceiptImage();
-    if (!dataUrl) return;
-
-    const link = document.createElement('a');
-    link.download = `Recibo_${mes}_${anio}.png`;
-    link.href = dataUrl;
-    link.click();
-    showToast('¡Imagen descargada!');
-  };
-
-  // Share via WhatsApp
-  const handleShareWhatsApp = async () => {
-    const textMsg = generateWhatsAppMessage(currentReceipt, settings.moneda);
-
-    const dataUrl = await generateReceiptImage();
-    if (dataUrl && navigator.share && navigator.canShare) {
-      try {
-        const response = await fetch(dataUrl);
-        const blob = await response.blob();
-        const file = new File([blob], `Recibo_${mes}_${anio}.png`, { type: 'image/png' });
-
-        if (navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            title: `Recibo - ${mes} ${anio}`,
-            text: textMsg,
-            files: [file]
-          });
-          showToast('¡Recibo compartido!');
-          return;
-        }
-      } catch (err) {
-        console.log('Fallback to text WhatsApp sharing', err);
-      }
-    }
-
+    setIsGeneratingImage(true);
     try {
-      await navigator.clipboard.writeText(textMsg);
-      showToast('Texto copiado. Abriendo WhatsApp...');
-    } catch (e) {
-      console.log('Clipboard error', e);
-    }
+      const dataUrl = await generateReceiptImage();
+      if (!dataUrl) return;
 
-    if (dataUrl) {
+      if (Capacitor.isNativePlatform()) {
+        try {
+          const base64Data = dataUrl.split(',')[1];
+          const fileName = `Recibo_${mes}_${anio}.png`;
+          const savedFile = await Filesystem.writeFile({
+            path: fileName,
+            data: base64Data,
+            directory: Directory.Cache
+          });
+
+          // Compartir o abrir diálogo de guardado nativo
+          await Share.share({
+            title: `Recibo - ${mes} ${anio}`,
+            url: savedFile.uri,
+            dialogTitle: 'Guardar o Compartir Recibo'
+          });
+          showToast('¡Imagen lista!');
+          return;
+        } catch (e) {
+          console.error('Native save error', e);
+        }
+      }
+
+      // Descarga estándar en navegador web
       const link = document.createElement('a');
       link.download = `Recibo_${mes}_${anio}.png`;
       link.href = dataUrl;
       link.click();
+      showToast('¡Imagen descargada!');
+    } finally {
+      setIsGeneratingImage(false);
     }
+  };
 
-    const encoded = encodeURI(textMsg);
-    setTimeout(() => {
-      window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
-    }, 350);
+  // Share Image via WhatsApp
+  const handleShareWhatsApp = async () => {
+    setIsGeneratingImage(true);
+    try {
+      const dataUrl = await generateReceiptImage();
+      if (!dataUrl) return;
+
+      // 1. En la App de Celular Android (Capacitor Nativo)
+      if (Capacitor.isNativePlatform()) {
+        const base64Data = dataUrl.split(',')[1];
+        const fileName = `Recibo_${mes}_${anio}.png`;
+
+        // Guardamos la imagen en la caché del teléfono
+        const savedFile = await Filesystem.writeFile({
+          path: fileName,
+          data: base64Data,
+          directory: Directory.Cache
+        });
+
+        // Abrimos el panel nativo de compartir para enviar la IMAGEN a WhatsApp
+        await Share.share({
+          title: `Recibo - ${mes} ${anio}`,
+          url: savedFile.uri,
+          dialogTitle: 'Enviar imagen por WhatsApp'
+        });
+
+        showToast('¡Imagen lista para WhatsApp!');
+        return;
+      }
+
+      // 2. Si está en navegador móvil o PC con soporte de compartir archivos
+      if (navigator.share && navigator.canShare) {
+        try {
+          const response = await fetch(dataUrl);
+          const blob = await response.blob();
+          const file = new File([blob], `Recibo_${mes}_${anio}.png`, { type: 'image/png' });
+
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              title: `Recibo - ${mes} ${anio}`,
+              files: [file]
+            });
+            showToast('¡Imagen compartida!');
+            return;
+          }
+        } catch (err) {
+          console.log('Web share fallback', err);
+        }
+      }
+
+      // 3. En PC navegador de escritorio: Descarga la imagen y abre WhatsApp
+      const link = document.createElement('a');
+      link.download = `Recibo_${mes}_${anio}.png`;
+      link.href = dataUrl;
+      link.click();
+
+      const textMsg = generateWhatsAppMessage(currentReceipt, settings.moneda);
+      const encoded = encodeURI(textMsg);
+      setTimeout(() => {
+        window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
+      }, 350);
+      showToast('Imagen descargada. Abriendo WhatsApp...');
+    } catch (error) {
+      console.error('Error al compartir', error);
+      alert('Hubo un error al compartir la imagen.');
+    } finally {
+      setIsGeneratingImage(false);
+    }
   };
 
   // Prepare for next month
@@ -309,7 +363,7 @@ export const App: React.FC = () => {
                   </span>
                 </button>
 
-                {/* 2. Botón Compartir en WhatsApp */}
+                {/* 2. Botón Compartir Imagen en WhatsApp */}
                 <button
                   type="button"
                   onClick={handleShareWhatsApp}
@@ -318,7 +372,7 @@ export const App: React.FC = () => {
                 >
                   <Share2 className="w-5 h-5 text-emerald-400" />
                   <span>
-                    {isGeneratingImage ? 'Generando...' : 'Compartir en WhatsApp'}
+                    {isGeneratingImage ? 'Generando Imagen...' : 'Compartir Imagen en WhatsApp'}
                   </span>
                 </button>
 
