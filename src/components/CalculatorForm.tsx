@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { MESES } from '../utils/calculator';
-import { Gauge, Droplets, Calendar, AlertCircle, Zap, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Gauge, Droplets, Calendar, AlertCircle, Zap, ChevronLeft, ChevronRight, CheckSquare, Square } from 'lucide-react';
 
 interface CalculatorFormProps {
   mes: string;
@@ -15,6 +15,8 @@ interface CalculatorFormProps {
   setPrecioKwh: (v: string) => void;
   costoAgua: string;
   setCostoAgua: (v: string) => void;
+  incluirAgua: boolean;
+  setIncluirAgua: (v: boolean) => void;
   consumoCalculado: number;
   moneda: string;
 }
@@ -32,6 +34,8 @@ export const CalculatorForm: React.FC<CalculatorFormProps> = ({
   setPrecioKwh,
   costoAgua,
   setCostoAgua,
+  incluirAgua,
+  setIncluirAgua,
   consumoCalculado,
   moneda
 }) => {
@@ -84,7 +88,7 @@ export const CalculatorForm: React.FC<CalculatorFormProps> = ({
 
   return (
     <div className="bg-white rounded-2xl border border-slate-300 shadow-xs p-5 md:p-6 space-y-5">
-      {/* Título de la sección con Año más grande */}
+      {/* Título de la sección con Año */}
       <div className="border-b border-slate-200 pb-2.5 flex items-center justify-between">
         <h2 className="text-xl font-black text-slate-900">
           Datos del Mes
@@ -170,7 +174,7 @@ export const CalculatorForm: React.FC<CalculatorFormProps> = ({
         )}
       </div>
 
-      {/* LOS CAMPOS CADA UNO EN SU PROPIO BLOQUE (1 POR BLOQUE, NUNCA APILADOS EN 3 JUNTOS) */}
+      {/* LOS CAMPOS CADA UNO EN SU PROPIO BLOQUE (1 POR FILA) */}
       <div className="space-y-4">
         {/* Bloque 1: Lectura Anterior */}
         <div className="space-y-1.5">
@@ -215,26 +219,60 @@ export const CalculatorForm: React.FC<CalculatorFormProps> = ({
           </div>
         </div>
 
-        {/* Bloque 3: Costo de Agua */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
-            <Droplets className="w-3.5 h-3.5 text-sky-600 fill-sky-500" />
-            <span>Costo de Agua</span>
-          </label>
-          <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-base font-bold text-slate-400 pointer-events-none select-none">
-              {moneda}
-            </span>
-            <input
-              type="number"
-              step="0.5"
-              inputMode="decimal"
-              value={costoAgua}
-              onChange={(e) => setCostoAgua(e.target.value)}
-              placeholder="10.00"
-              className="w-full text-2xl font-bold font-mono py-3 pl-12 pr-4 rounded-xl border-2 border-sky-300 bg-sky-50/20 text-slate-900 focus:bg-white focus:border-sky-600 focus:outline-hidden transition-all"
-            />
+        {/* Bloque 3: Costo de Agua con Casilla de Verificación (Check) */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
+              <Droplets className="w-3.5 h-3.5 text-sky-600 fill-sky-500" />
+              <span>Costo de Agua</span>
+            </label>
+
+            {/* Botón Check: Aplicar costo de agua */}
+            <button
+              type="button"
+              onClick={() => setIncluirAgua(!incluirAgua)}
+              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold transition-all border ${
+                incluirAgua
+                  ? 'bg-sky-50 text-sky-800 border-sky-300 shadow-2xs'
+                  : 'bg-slate-100 text-slate-500 border-slate-300 hover:bg-slate-200'
+              }`}
+            >
+              {incluirAgua ? (
+                <CheckSquare className="w-4 h-4 text-sky-600" />
+              ) : (
+                <Square className="w-4 h-4 text-slate-400" />
+              )}
+              <span>{incluirAgua ? 'Agua Aplicada' : 'No Cobrar Agua'}</span>
+            </button>
           </div>
+
+          {incluirAgua ? (
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-base font-bold text-slate-400 pointer-events-none select-none">
+                {moneda}
+              </span>
+              <input
+                type="number"
+                step="0.5"
+                inputMode="decimal"
+                value={costoAgua}
+                onChange={(e) => setCostoAgua(e.target.value)}
+                placeholder="10.00"
+                className="w-full text-2xl font-bold font-mono py-3 pl-12 pr-4 rounded-xl border-2 border-sky-300 bg-sky-50/20 text-slate-900 focus:bg-white focus:border-sky-600 focus:outline-hidden transition-all"
+              />
+            </div>
+          ) : (
+            <div className="py-3 px-4 bg-slate-50 border border-dashed border-slate-300 rounded-xl text-xs text-slate-500 font-medium flex items-center justify-between">
+              <span>Agua excluida del recibo (solo se calculará la luz)</span>
+              <button
+                type="button"
+                onClick={() => setIncluirAgua(true)}
+                className="text-sky-700 font-bold hover:underline"
+              >
+                Activar
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

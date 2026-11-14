@@ -20,6 +20,7 @@ export interface CalculationInput {
   lecturaActual: number;
   precioKwh: number;
   costoAgua: number;
+  incluirAgua: boolean;
   settings: AppSettings;
   mes: string;
   anio: number;
@@ -39,7 +40,17 @@ export function formatCurrency(amount: number, symbol: string = 'S/'): string {
 }
 
 export function calculateReceipt(input: CalculationInput): ReceiptRecord {
-  const { lecturaAnterior, lecturaActual, precioKwh, costoAgua, settings, mes, anio, departmentId = 'default' } = input;
+  const {
+    lecturaAnterior,
+    lecturaActual,
+    precioKwh,
+    costoAgua,
+    incluirAgua = true,
+    settings,
+    mes,
+    anio,
+    departmentId = 'default'
+  } = input;
 
   // 1. Consumo = Lectura Actual - Lectura Anterior
   const consumoKwh = Math.max(0, round2(lecturaActual - lecturaAnterior));
@@ -54,11 +65,14 @@ export function calculateReceipt(input: CalculationInput): ReceiptRecord {
   // 4. IGV (18%) = Subtotal * (IGV / 100)
   const igv = round2(subtotal * (settings.igvPorcentaje / 100));
 
-  // 5. Costo de Luz = Subtotal + IGV (Exacto a centésimas, tal cual la libreta: 104.74)
+  // 5. Costo de Luz = Subtotal + IGV (Exacto a centésimas: 104.74)
   const costoLuz = round2(subtotal + igv);
 
-  // 6. Total a Pagar = (Costo de Luz + Costo de Agua) REDONDEADO al primer decimal (a 10 céntimos: 114.70)
-  const totalSinRedondear = costoLuz + costoAgua;
+  // 6. Agua aplicada o no
+  const montoAguaAplicado = incluirAgua ? costoAgua : 0;
+
+  // 7. Total a Pagar = (Costo de Luz + Agua) REDONDEADO a 10 céntimos
+  const totalSinRedondear = costoLuz + montoAguaAplicado;
   const totalPagar = round1Decimal(totalSinRedondear);
 
   return {
@@ -77,12 +91,17 @@ export function calculateReceipt(input: CalculationInput): ReceiptRecord {
     subtotal,
     igv,
     costoLuz,
-    costoAgua,
+    costoAgua: montoAguaAplicado,
+    incluirAgua,
     totalPagar
   };
 }
 
 export function generateWhatsAppMessage(receipt: ReceiptRecord, moneda: string = 'S/'): string {
+  const lineaAgua = receipt.incluirAgua
+    ? `\nCosto de Agua: ${receipt.costoAgua.toFixed(2)}`
+    : '';
+
   return `*Mes de ${receipt.mes}*
 ──────────────────────────
 Lectura anterior: ${receipt.lecturaAnterior.toFixed(2)}
@@ -98,8 +117,7 @@ Cargo Fijo: ${receipt.cargoFijo.toFixed(2)}
 Subtotal: ${receipt.subtotal.toFixed(2)}
 IGV (18%): ${receipt.igv.toFixed(2)}
 ──────────────────────────
-Costo de Luz: ${receipt.costoLuz.toFixed(2)}
-Costo de Agua: ${receipt.costoAgua.toFixed(2)}
+Costo de Luz: ${receipt.costoLuz.toFixed(2)}${lineaAgua}
 ══════════════════════════
 *Total a Pagar: ${moneda} ${receipt.totalPagar.toFixed(2)}*
 ══════════════════════════`;

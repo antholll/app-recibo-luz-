@@ -108,7 +108,7 @@ export const ReceiptTicket = forwardRef<HTMLDivElement, ReceiptTicketProps>(({
       {/* Separador */}
       <div className="border-t-2 border-slate-900 my-3"></div>
 
-      {/* 5. Costo Luz y Costo Agua */}
+      {/* 5. Costo Luz y opcionalmente Costo Agua */}
       <div className="space-y-1.5 text-base">
         <div className="flex justify-between items-baseline">
           <span className="text-slate-800 font-medium">Costo de Luz:</span>
@@ -116,12 +116,14 @@ export const ReceiptTicket = forwardRef<HTMLDivElement, ReceiptTicketProps>(({
             {receipt.costoLuz.toFixed(2)}
           </span>
         </div>
-        <div className="flex justify-between items-baseline">
-          <span className="text-slate-800 font-medium">Costo de Agua:</span>
-          <span className="font-mono font-bold text-lg tracking-wider">
-            {receipt.costoAgua.toFixed(2)}
-          </span>
-        </div>
+        {receipt.incluirAgua && (
+          <div className="flex justify-between items-baseline">
+            <span className="text-slate-800 font-medium">Costo de Agua:</span>
+            <span className="font-mono font-bold text-lg tracking-wider">
+              {receipt.costoAgua.toFixed(2)}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* 6. Recuadro Formal: Total a Pagar */}

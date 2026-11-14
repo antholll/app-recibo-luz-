@@ -42,6 +42,7 @@ export const App: React.FC = () => {
   const [lecturaActual, setLecturaActual] = useState<string>('5189.60');
   const [precioKwh, setPrecioKwh] = useState<string>('0.7089');
   const [costoAgua, setCostoAgua] = useState<string>('10.00');
+  const [incluirAgua, setIncluirAgua] = useState<boolean>(true);
 
   // UI Modals
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -75,7 +76,7 @@ export const App: React.FC = () => {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  // Real-time calculation with 1-decimal rounding on Costo de Luz
+  // Real-time calculation with optional water and rounded final total
   const numAnterior = parseFloat(lecturaAnterior) || 0;
   const numActual = parseFloat(lecturaActual) || 0;
   const numPrecioKwh = parseFloat(precioKwh) || settings.precioKwh;
@@ -87,6 +88,7 @@ export const App: React.FC = () => {
     lecturaActual: numActual,
     precioKwh: numPrecioKwh,
     costoAgua: numAgua,
+    incluirAgua,
     settings,
     mes,
     anio
@@ -215,6 +217,7 @@ export const App: React.FC = () => {
     setLecturaActual(r.lecturaActual.toString());
     setPrecioKwh(r.precioKwh.toString());
     setCostoAgua(r.costoAgua.toString());
+    setIncluirAgua(r.incluirAgua !== undefined ? r.incluirAgua : true);
     showToast(`Recibo cargado: ${r.mes} ${r.anio}`);
   };
 
@@ -262,6 +265,8 @@ export const App: React.FC = () => {
                 setPrecioKwh={setPrecioKwh}
                 costoAgua={costoAgua}
                 setCostoAgua={setCostoAgua}
+                incluirAgua={incluirAgua}
+                setIncluirAgua={setIncluirAgua}
                 consumoCalculado={consumoCalculado}
                 moneda={settings.moneda}
               />

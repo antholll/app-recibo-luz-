@@ -25,6 +25,7 @@ export interface ReceiptRecord {
   igv: number;
   costoLuz: number;
   costoAgua: number;
+  incluirAgua: boolean;
   totalPagar: number;
 }
 
