@@ -22,7 +22,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
           <div>
             <h1 className="text-xl md:text-2xl font-black text-slate-900 leading-none">
-              Recibo de Luz
+              Calculadora de Luz
             </h1>
           </div>
         </div>

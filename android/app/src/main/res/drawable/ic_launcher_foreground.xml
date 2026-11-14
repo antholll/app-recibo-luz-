@@ -1,0 +1,27 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Círculo interior sutil de fondo -->
+    <path
+        android:fillColor="#1E293B"
+        android:pathData="M54,18 A36,36 0 1,0 54,90 A36,36 0 1,0 54,18 Z" />
+    
+    <!-- Anillo esmeralda suave -->
+    <path
+        android:strokeColor="#10B981"
+        android:strokeWidth="2.5"
+        android:fillColor="#00000000"
+        android:pathData="M54,20 A34,34 0 1,0 54,88 A34,34 0 1,0 54,20 Z" />
+
+    <!-- Sombra del Rayo -->
+    <path
+        android:fillColor="#78350F"
+        android:pathData="M57,28 L37,57 L53,57 L49,83 L73,51 L57,51 Z" />
+
+    <!-- Rayo Eléctrico Dorado (⚡) -->
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M55,27 L35,56 L51,56 L47,82 L71,50 L55,50 Z" />
+</vector>

@@ -1,6 +1,6 @@
 {
   "appId": "com.appluz.recibos",
-  "appName": "Recibo de Luz",
+  "appName": "Calculadora de Luz",
   "webDir": "dist",
   "server": {
     "androidScheme": "https"
