@@ -15,9 +15,12 @@ export const ReceiptTicket = forwardRef<HTMLDivElement, ReceiptTicketProps>(({
   return (
     <div
       ref={ref}
-      className={`bg-white rounded-xl border-2 border-slate-900 shadow-md transition-all text-slate-900 font-sans ${
-        isCapturing ? 'w-[420px] p-8' : 'w-full max-w-md p-6'
+      className={`bg-white border-2 border-slate-900 shadow-sm transition-all text-slate-900 font-sans ${
+        isCapturing ? 'w-[420px] p-7' : 'w-full max-w-md p-6'
       }`}
+      style={{
+        borderRadius: 0 // Bordes completamente cuadrados para que ocupe toda la imagen sin esquinas blancas en WhatsApp
+      }}
     >
       {/* Título: Mes formal subrayado idéntico a la libreta */}
       <div className="text-center pb-5">
@@ -126,9 +129,9 @@ export const ReceiptTicket = forwardRef<HTMLDivElement, ReceiptTicketProps>(({
         )}
       </div>
 
-      {/* 6. Recuadro Formal: Total a Pagar */}
+      {/* 6. Recuadro Formal: Total a Pagar (cuadrado formal) */}
       <div className="mt-4 pt-2">
-        <div className="border-2 border-slate-900 rounded-lg p-3.5 flex justify-between items-center bg-slate-50/50">
+        <div className="border-2 border-slate-900 p-3.5 flex justify-between items-center bg-slate-50/50">
           <div>
             <span className="text-base font-bold text-slate-900 block leading-tight">
               Total a Pagar
